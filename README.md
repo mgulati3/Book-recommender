@@ -100,8 +100,7 @@ The app can be deployed on platforms like Render or Hugging Face Spaces. Due to 
 
 📷 Screenshots / Demo
 
-Find screenshots and/or a video walkthrough on the GitHub repository:
-https://github.com/yourusername/semantic-book-recommender
+SOON
 
 ---
 
