@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: semantic-book-recommender
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py  # or your main script
+    plan: free
