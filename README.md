@@ -59,13 +59,13 @@ This project covers:
 
 📂 Directory Structure
 
-app.py                    # Main script with dashboard logic
-requirements.txt          # All required libraries
-books_with_emotions.csv   # Book dataset with metadata and emotion scores
-tagged_description.txt    # Descriptions used for vector similarity
-search_history.json       # Local cache of recent searches
-book_icon.png             # Icon used in Gradio dashboard (optional)
-README.txt                # You are here!
+- app.py                    # Main script with dashboard logic
+- requirements.txt          # All required libraries
+- books_with_emotions.csv   # Book dataset with metadata and emotion scores
+- tagged_description.txt    # Descriptions used for vector similarity
+- search_history.json       # Local cache of recent searches
+- book_icon.png             # Icon used in Gradio dashboard (optional)
+- README.txt                # You are here!
 
 ---
 
