@@ -465,4 +465,5 @@ if __name__ == "__main__":
             print(f"Could not create book icon: {e}")
 
     # Launch the dashboard
-    dashboard.launch()
+    port = int(os.environ.get("PORT", 7860))
+    dashboard.launch(server_name="0.0.0.0", server_port=port)
