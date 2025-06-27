@@ -187,23 +187,26 @@ def retrieve_semantic_recommendations(
 def recommend_books(query, category, tone, sort_by, progress=gr.Progress()):
     """Main function to recommend books based on user input"""
     if not query.strip():
-        return [], "Please enter a search query"
+        return [], "⚠️ Please enter a search query to get started"
 
-    progress(0, desc="Starting search...")
+    progress(0, desc="🔍 Starting search...")
+    time.sleep(0.5)  # Small delay for better UX
 
     # Add to search history
     add_to_search_history(query, category, tone, sort_by)
 
-    progress(0.3, desc="Retrieving semantic matches...")
+    progress(0.3, desc="🧠 Retrieving semantic matches...")
+    time.sleep(0.3)
     recommendations = retrieve_semantic_recommendations(
         query, category, tone, sort_by
     )
 
-    progress(0.6, desc="Formatting results...")
+    progress(0.6, desc="✨ Formatting results...")
+    time.sleep(0.3)
     results = []
 
     if recommendations.empty:
-        return [], "No books found matching your criteria. Try adjusting your filters."
+        return [], "📚 No books found matching your criteria. Try adjusting your filters or search terms."
 
     for _, row in recommendations.iterrows():
         # Get book description, handling different column names
@@ -218,39 +221,31 @@ def recommend_books(query, category, tone, sort_by, progress=gr.Progress()):
         # Format authors
         authors_str = format_authors(row["authors"])
 
-        # Format emotion data
+        # Format emotion data with emojis
         emotion_cols = ["joy", "surprise", "anger", "fear", "sadness"]
+        emotion_emojis = {"joy": "😊", "surprise": "😲", "anger": "😠", "fear": "😨", "sadness": "😢"}
         emotion_info = []
         for emo in emotion_cols:
             if pd.notnull(row.get(emo, None)) and row.get(emo, 0) > 0:
                 percentage = round(row[emo] * 100)
-                emotion_info.append(f"{emo.capitalize()}: {percentage}%")
+                emoji = emotion_emojis.get(emo, "")
+                emotion_info.append(f"{emoji} {emo.capitalize()}: {percentage}%")
 
-        emotion_text = ", ".join(emotion_info) if emotion_info else "No emotion data"
+        emotion_text = " | ".join(emotion_info) if emotion_info else "No emotion data available"
 
-        # Create caption
+        # Create modern caption with better formatting
         caption = (
-            f"**{row['title']}**\n"
-            f"By {authors_str}\n\n"
+            f"## **{row['title']}**\n"
+            f"✍️ *{authors_str}*\n\n"
             f"{truncated_description}\n\n"
-            f"**Emotional Profile:** {emotion_text}"
+            f"**📊 Emotional Profile:**\n{emotion_text}"
         )
 
         # Add to results
         results.append((row["large_thumbnail"], caption))
 
-    progress(1.0, desc="Done!")
-    return results, f"Found {len(results)} books matching your criteria"
-
-
-def load_from_history(history_item):
-    """Load search parameters from history"""
-    return (
-        history_item["query"],
-        history_item["category"],
-        history_item["tone"],
-        history_item["sort_by"]
-    )
+    progress(1.0, desc="🎉 Done!")
+    return results, f"🎯 Found {len(results)} books matching your criteria"
 
 
 def clear_search():
@@ -260,103 +255,286 @@ def clear_search():
 
 # Prepare UI elements
 categories = ["All"] + sorted(books["simple_categories"].dropna().unique().tolist())
-tones = ["All", "Happy", "Surprising", "Angry", "Suspenseful", "Sad"]
+tones = ["All", "😊 Happy", "😲 Surprising", "😠 Angry", "😨 Suspenseful", "😢 Sad"]
 sorting_options = ["Relevance", "Emotion Intensity"]
 
-# Create the Gradio UI
-with gr.Blocks(theme=gr.themes.Soft()) as dashboard:
+# Custom CSS for modern UI
+modern_css = """
+/* Modern gradient background */
+.gradio-container {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+}
+
+/* Glass morphism effect for main container */
+.main-container {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    padding: 20px;
+    margin: 20px;
+}
+
+/* Modern card styling */
+.search-card {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(5px);
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 20px;
+    margin: 10px 0;
+    transition: all 0.3s ease;
+}
+
+.search-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Modern button styling */
+.modern-btn {
+    background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+    border: none;
+    border-radius: 25px;
+    padding: 12px 30px;
+    color: white;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.modern-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Animated loading spinner */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #FF6B6B;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+    margin-right: 10px;
+}
+
+/* Gallery improvements */
+.gallery-container {
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Theme toggle improvements */
+.theme-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border-radius: 50px;
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Dark theme styles */
+.dark-theme {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+.dark-theme .main-container {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark-theme .search-card {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Smooth transitions */
+* {
+    transition: all 0.3s ease;
+}
+
+/* Modern scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* Floating animation */
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+}
+
+.floating-element {
+    animation: float 6s ease-in-out infinite;
+}
+
+/* Modern input styling */
+.gr-textbox, .gr-dropdown {
+    border-radius: 10px !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(5px) !important;
+}
+"""
+
+# Create the Gradio UI 
+with gr.Blocks(css=modern_css, title="📚 Modern Book Recommender") as dashboard:
+    
     # Header section
     with gr.Row():
         with gr.Column(scale=1):
-            if os.path.exists("book_icon.png"):
-                gr.Image("book_icon.png", show_label=False, width=100)
+            gr.HTML("""
+                <div class="floating-element">
+                    <div style="font-size: 4rem; text-align: center;">📚</div>
+                </div>
+            """)
         with gr.Column(scale=4):
-            gr.Markdown(
-                """
-                # 📚 Enhanced Semantic Book Recommender
-                Discover books that match your interests and emotional preferences
-                """
-            )
+            gr.HTML("""
+                <div style="text-align: center; padding: 20px;">
+                    <h1 style="background: linear-gradient(45deg, #FF6B6B, #4ECDC4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 2.5rem; margin: 0;">
+                        ✨ Modern Book Recommender
+                    </h1>
+                    <p style="color: rgba(255, 255, 255, 0.8); font-size: 1.2rem; margin: 10px 0;">
+                        Discover your next favorite book with AI-powered recommendations
+                    </p>
+                </div>
+            """)
         with gr.Column(scale=1):
-            theme_toggle = gr.Checkbox(
-                label="Dark Theme",
-                value=False,
-                interactive=True
-            )
+            pass  # Empty column for spacing
 
-    # Main search section (using gr.Row instead of gr.Box)
-    gr.Markdown("### 🔍 Find Your Next Great Read")
+    # Search section 
+    gr.HTML("""
+        <div style="text-align: center; margin: 30px 0;">
+            <h2 style="color: white; font-size: 1.8rem;">🔍 Find Your Perfect Read</h2>
+            <div style="width: 100px; height: 3px; background: linear-gradient(45deg, #FF6B6B, #4ECDC4); margin: 10px auto; border-radius: 5px;"></div>
+        </div>
+    """)
+    
     with gr.Row():
         user_query = gr.Textbox(
-            label="What kind of story are you looking for?",
-            placeholder="e.g., A story about second chances and forgiveness in a small town",
-            lines=2
+            label="✍️ What kind of story are you looking for?",
+            placeholder="e.g., A thrilling mystery set in Victorian London, or a heartwarming romance about second chances...",
+            lines=3,
+            elem_classes=["search-card"]
         )
 
     with gr.Row():
         with gr.Column():
             category_dropdown = gr.Dropdown(
                 choices=categories,
-                label="Category:",
+                label="📖 Category",
                 value="All",
                 interactive=True
             )
         with gr.Column():
             tone_dropdown = gr.Dropdown(
                 choices=tones,
-                label="Emotional Tone:",
+                label="🎭 Emotional Tone",
                 value="All",
                 interactive=True
             )
         with gr.Column():
             sort_by_dropdown = gr.Dropdown(
                 choices=sorting_options,
-                label="Sort By:",
+                label="🔄 Sort By",
                 value="Relevance",
                 interactive=True
             )
 
     with gr.Row():
         with gr.Column():
-            submit_button = gr.Button("🔍 Find Recommendations", variant="primary")
+            submit_button = gr.Button(
+                "🚀 Find My Books",
+                variant="primary",
+                elem_classes=["modern-btn"],
+                scale=2
+            )
         with gr.Column():
-            clear_button = gr.Button("🗑️ Clear Search")
+            clear_button = gr.Button(
+                "🗑️ Clear",
+                elem_classes=["modern-btn"],
+                scale=1
+            )
 
     # Status section
     with gr.Row():
-        status_box = gr.Textbox(label="Status", value="Enter your search criteria above", interactive=False)
+        status_box = gr.Textbox(
+            label="📊 Status",
+            value="✨ Ready to find your next great read!",
+            interactive=False,
+            elem_classes=["search-card"]
+        )
 
     # Results section
-    gr.Markdown("## ✨ Recommended Books")
+    gr.HTML("""
+        <div style="text-align: center; margin: 40px 0 20px 0;">
+            <h2 style="color: white; font-size: 1.8rem;">📚 Your Personalized Recommendations</h2>
+            <div style="width: 100px; height: 3px; background: linear-gradient(45deg, #FF6B6B, #4ECDC4); margin: 10px auto; border-radius: 5px;"></div>
+        </div>
+    """)
+    
     output_gallery = gr.Gallery(
-        label="Recommended Books",
+        label="",
         columns=4,
         rows=2,
         show_label=False,
-        object_fit="contain"
+        object_fit="contain",
+        elem_classes=["gallery-container"]
     )
-
-    # Book details section (using Row instead of Box)
-    gr.Markdown("### 📖 Book Details", visible=False)
-    with gr.Row(visible=False) as book_details_row:
-        with gr.Column(scale=1):
-            detail_image = gr.Image(label="Cover", interactive=False)
-        with gr.Column(scale=3):
-            detail_title = gr.Textbox(label="Title", interactive=False)
-            detail_author = gr.Textbox(label="Author(s)", interactive=False)
-            detail_category = gr.Textbox(label="Category", interactive=False)
-            detail_description = gr.Textbox(label="Description", lines=5, interactive=False)
 
     # Search history section
     with gr.Accordion("📜 Search History", open=False):
+        gr.HTML("""
+            <div style="text-align: center; margin-bottom: 15px;">
+                <p style="color: rgba(255, 255, 255, 0.7);">Click on any previous search to reload it</p>
+            </div>
+        """)
         history_list = gr.Dataframe(
-            headers=["Time", "Query", "Category", "Tone", "Sort By"],
+            headers=["🕐 Time", "🔍 Query", "📖 Category", "🎭 Tone", "🔄 Sort"],
             datatype=["str", "str", "str", "str", "str"],
             interactive=False,
-            wrap=True
+            wrap=True,
+            elem_classes=["search-card"]
         )
-        load_history_button = gr.Button("Load Selected Search")
 
+    # Footer
+    gr.HTML("""
+        <div style="text-align: center; margin-top: 40px; padding: 20px; border-top: 1px solid rgba(255, 255, 255, 0.2);">
+            <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem;">
+                Made with ❤️ using AI-powered semantic search | 
+                <span style="color: #FF6B6B;">✨ Bringing books and readers together</span>
+            </p>
+        </div>
+    """)
 
     # Event handlers
     def update_history_list():
@@ -364,28 +542,23 @@ with gr.Blocks(theme=gr.themes.Soft()) as dashboard:
         if not search_history:
             return []
 
-        # Format for display
-        return [[
-            item["timestamp"],
-            item["query"],
-            item["category"],
-            item["tone"],
-            item["sort_by"]
-        ] for item in search_history[::-1]]  # Reverse to show newest first
+        # Format for display with emojis
+        formatted_history = []
+        for item in search_history[::-1]:  # Reverse to show newest first
+            # Clean up tone display
+            tone_display = item["tone"].replace("😊 ", "").replace("😲 ", "").replace("😠 ", "").replace("😨 ", "").replace("😢 ", "")
+            formatted_history.append([
+                item["timestamp"],
+                item["query"][:50] + "..." if len(item["query"]) > 50 else item["query"],
+                item["category"],
+                tone_display,
+                item["sort_by"]
+            ])
+        return formatted_history
 
-
-    # Set theme based on toggle
-    def set_theme(dark_mode):
-        if dark_mode:
-            return gr.themes.Monochrome()
-        return gr.themes.Soft()
-
-
-    theme_toggle.change(
-        fn=set_theme,
-        inputs=theme_toggle,
-        outputs=dashboard
-    )
+    def toggle_theme(is_dark):
+        """Toggle between light and dark theme - REMOVED"""
+        pass
 
     # Clear search
     clear_button.click(
@@ -394,7 +567,6 @@ with gr.Blocks(theme=gr.themes.Soft()) as dashboard:
         outputs=[user_query, category_dropdown, tone_dropdown, sort_by_dropdown]
     )
 
-
     # Load history item
     def handle_history_selection(evt: gr.SelectData):
         if not search_history or evt.index[0] >= len(search_history):
@@ -402,13 +574,24 @@ with gr.Blocks(theme=gr.themes.Soft()) as dashboard:
 
         # Get the selected history item (accounting for reversed display)
         selected_item = search_history[-(evt.index[0] + 1)]
+        
+        # Map the tone back to the display format
+        tone_mapping = {
+            "Happy": "😊 Happy",
+            "Surprising": "😲 Surprising", 
+            "Angry": "😠 Angry",
+            "Suspenseful": "😨 Suspenseful",
+            "Sad": "😢 Sad"
+        }
+        
+        display_tone = tone_mapping.get(selected_item["tone"], selected_item["tone"])
+        
         return (
             selected_item["query"],
             selected_item["category"],
-            selected_item["tone"],
+            display_tone,
             selected_item["sort_by"]
         )
-
 
     history_list.select(
         fn=handle_history_selection,
@@ -416,34 +599,31 @@ with gr.Blocks(theme=gr.themes.Soft()) as dashboard:
         outputs=[user_query, category_dropdown, tone_dropdown, sort_by_dropdown]
     )
 
-    # Update history when search completed
-    submit_button.click(
-        fn=update_history_list,
-        inputs=[],
-        outputs=history_list
-    )
-
     # Main recommendation function
+    def recommend_with_history_update(query, category, tone, sort_by):
+        # Clean tone for processing (remove emojis)
+        clean_tone = tone.replace("😊 ", "").replace("😲 ", "").replace("😠 ", "").replace("😨 ", "").replace("😢 ", "")
+        
+        # Get recommendations
+        results, status = recommend_books(query, category, clean_tone, sort_by)
+        
+        # Update history
+        history = update_history_list()
+        
+        return results, status, history
+
     submit_button.click(
-        fn=recommend_books,
+        fn=recommend_with_history_update,
         inputs=[user_query, category_dropdown, tone_dropdown, sort_by_dropdown],
-        outputs=[output_gallery, status_box]
+        outputs=[output_gallery, status_box, history_list]
     )
 
-    # Initialize search history
+    # Initialize search history on load
     dashboard.load(
         fn=update_history_list,
         inputs=[],
-        outputs=history_list
+        outputs=[history_list]
     )
-
-    # Footer
-    gr.Markdown("""
-    ---
-    **Made with ❤️ by Manan Gulati** 
-
-    *This application uses semantic search to find books matching your interests.*
-    """)
 
 if __name__ == "__main__":
     # Create placeholder icon if it doesn't exist
