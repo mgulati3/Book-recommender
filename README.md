@@ -100,7 +100,14 @@ The app can be deployed on platforms like Render or Hugging Face Spaces. Due to 
 
 📷 Screenshots / Demo
 
-SOON
+
+![Greet](https://github.com/user-attachments/assets/8b72fcc5-26f7-48e9-8da1-446d9b08883f)
+![Screenshot 2025-06-27 at 1 04 38 PM](https://github.com/user-attachments/assets/b3272be6-0707-420b-bef6-ec5c6093ba49)
+![Screenshot 2025-06-27 at 1 04 48 PM](https://github.com/user-attachments/assets/f32bc4dd-96f3-4c6d-895e-e25a7ca956df)
+![Screenshot 2025-06-27 at 1 04 58 PM](https://github.com/user-attachments/assets/4bd3ccfc-9499-4501-bd62-f95bc017375f)
+![Screenshot 2025-06-27 at 1 05 11 PM](https://github.com/user-attachments/assets/976d0942-be9a-4097-a862-efa7286e600a)
+![Screenshot 2025-06-27 at 1 05 32 PM](https://github.com/user-attachments/assets/5a33ed1b-3153-4466-9bd6-54717ba306e4)
+
 
 ---
 
