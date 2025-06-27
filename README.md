@@ -72,7 +72,7 @@ This project covers:
 ⚙️ Setup Instructions
 
 1. Clone this repo:
-   git clone https://github.com/yourusername/semantic-book-recommender.git
+   git clone https://github.com/mgulati3/Book-recommender.git
 
 2. Create a virtual environment (optional but recommended):
    python -m venv venv
