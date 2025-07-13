@@ -57,7 +57,7 @@ This project covers:
 
 ---
 
-📂 Directory Structure
+📂 File Structure
 
 - app.py                    # Main script with dashboard logic
 - requirements.txt          # All required libraries
